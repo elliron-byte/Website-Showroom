@@ -1,20 +1,22 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, MessageSquare, Mail, LayoutGrid, Image as ImageIcon, Upload, X } from 'lucide-react';
 import { WebsiteListing } from '../types';
 
 interface AdminDashboardProps {
   listings: WebsiteListing[];
   onAdd: (listing: WebsiteListing) => void;
+  onUpdate: (listing: WebsiteListing) => void;
   onDelete: (id: string) => void;
   onLogout: () => void;
 }
 
 type AdminTab = 'websites' | 'enquiries' | 'contact';
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd, onDelete, onLogout }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd, onUpdate, onDelete, onLogout }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('websites');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [newSite, setNewSite] = useState<Partial<WebsiteListing>>({
@@ -51,6 +53,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
     }
   };
 
+  const openAddForm = () => {
+    setEditingId(null);
+    resetForm();
+    setShowAddForm(true);
+  };
+
+  const openEditForm = (site: WebsiteListing) => {
+    setEditingId(site.id);
+    setNewSite({ ...site });
+    setShowAddForm(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSite.image) {
@@ -58,14 +72,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
       return;
     }
 
-    const listing: WebsiteListing = {
-      ...newSite as WebsiteListing,
-      id: Math.random().toString(36).substr(2, 9),
-      askingMultiple: newSite.monthlyProfit ? Math.round((newSite.price! / newSite.monthlyProfit) * 100) / 100 : 0,
-      techStack: newSite.techStack?.length ? newSite.techStack : ['React', 'Webflow'], // Default if empty
-    };
+    const profit = newSite.monthlyProfit || 1;
+    const askingMultiple = Math.round((newSite.price! / profit) * 100) / 100;
 
-    onAdd(listing);
+    if (editingId) {
+      const updatedListing: WebsiteListing = {
+        ...newSite as WebsiteListing,
+        id: editingId,
+        askingMultiple,
+      };
+      onUpdate(updatedListing);
+    } else {
+      const listing: WebsiteListing = {
+        ...newSite as WebsiteListing,
+        id: Math.random().toString(36).substr(2, 9),
+        askingMultiple,
+        techStack: newSite.techStack?.length ? newSite.techStack : ['React', 'Webflow'],
+      };
+      onAdd(listing);
+    }
+
     setShowAddForm(false);
     resetForm();
   };
@@ -83,6 +109,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
       ], 
       age: 'Brand New', image: '', monthlyRevenue: 0, monthlyTraffic: 0
     });
+    setEditingId(null);
   };
 
   const renderWebsitesContent = () => (
@@ -93,15 +120,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
           <p className="text-slate-500 font-medium mt-1">Total Assets: {listings.length}</p>
         </div>
         <button 
-          onClick={() => setShowAddForm(true)}
+          onClick={openAddForm}
           className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2"
         >
           <Plus className="w-5 h-5" /> Add Website
         </button>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left">
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full text-left min-w-[800px]">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-8 py-5 text-xs font-black uppercase text-slate-400">Website</th>
@@ -116,7 +143,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
               <tr key={site.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-8 py-6">
                   <div className="flex items-center gap-4">
-                    <img src={site.image || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-xl object-cover" />
+                    <img src={site.image || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-xl object-cover border border-slate-100" />
                     <div>
                       <div className="font-bold text-slate-900">{site.name}</div>
                       <div className="text-xs text-slate-400 flex items-center gap-1 line-clamp-1">{site.url} <ExternalLink className="w-3 h-3" /></div>
@@ -130,11 +157,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
                 <td className="px-8 py-6 text-emerald-600 font-bold">${site.monthlyProfit.toLocaleString()}</td>
                 <td className="px-8 py-6 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><Edit className="w-4 h-4" /></button>
+                    <button 
+                      onClick={() => openEditForm(site)}
+                      className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
                     <button 
                       onClick={() => onDelete(site.id)}
                       className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-all"
-                    ><Trash2 className="w-4 h-4" /></button>
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -174,7 +208,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
       <nav className="bg-indigo-950 text-white px-8 py-4 flex items-center justify-between shadow-xl sticky top-0 z-[100]">
         <div className="flex items-center gap-3">
           <Globe className="w-6 h-6" />
-          <span className="text-xl font-black uppercase tracking-tighter">Admin Control Center</span>
+          <span className="text-xl font-black uppercase tracking-tighter">Admin Center</span>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex gap-1">
@@ -216,7 +250,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowAddForm(false)}></div>
             <form onSubmit={handleSubmit} className="relative bg-white w-full max-w-2xl rounded-[2.5rem] p-10 shadow-2xl my-8">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black text-slate-900">Register New Asset</h2>
+                <h2 className="text-2xl font-black text-slate-900">{editingId ? 'Edit Asset' : 'Register New Asset'}</h2>
                 <button type="button" onClick={() => setShowAddForm(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                   <X className="w-6 h-6 text-slate-400" />
                 </button>
@@ -256,8 +290,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
                           <img src={newSite.image} className="absolute inset-0 w-full h-full object-cover opacity-20" />
                           <div className="relative z-10 flex flex-col items-center">
                             <ImageIcon className="w-8 h-8 text-indigo-600 mb-2" />
-                            <span className="text-xs font-bold text-slate-600">Image Loaded Successfully</span>
-                            <span className="text-[10px] text-slate-400 mt-1">Click to change</span>
+                            <span className="text-xs font-bold text-slate-600">Image Uploaded</span>
+                            <span className="text-[10px] text-slate-400 mt-1">Click to change screenshot</span>
                           </div>
                         </>
                       ) : (
@@ -277,9 +311,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
                     </div>
                   </div>
 
-                  <div className="col-span-2">
+                  <div>
                     <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Monthly Profit ($)</label>
                     <input required type="number" value={newSite.monthlyProfit} onChange={e => setNewSite({...newSite, monthlyProfit: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Monthly Revenue ($)</label>
+                    <input required type="number" value={newSite.monthlyRevenue} onChange={e => setNewSite({...newSite, monthlyRevenue: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" />
                   </div>
 
                   <div className="col-span-2">
@@ -294,7 +333,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <button type="submit" className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors">Save Asset</button>
+                  <button type="submit" className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors">
+                    {editingId ? 'Update Asset' : 'Save Asset'}
+                  </button>
                   <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl hover:bg-slate-200 transition-colors">Cancel</button>
                 </div>
               </div>

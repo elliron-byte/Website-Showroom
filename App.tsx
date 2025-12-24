@@ -55,14 +55,20 @@ const App: React.FC = () => {
     return result;
   }, [listings, categoryFilter, sortBy]);
 
-  const categories = ['All', 'SaaS', 'E-commerce', 'Tool', 'Content'];
+  const categories = ['All', 'SaaS', 'E-commerce', 'Tool', 'Content', 'Marketplace'];
 
   const handleDeleteListing = (id: string) => {
-    setListings(prev => prev.filter(l => l.id !== id));
+    if (window.confirm('Are you sure you want to delete this listing?')) {
+      setListings(prev => prev.filter(l => l.id !== id));
+    }
   };
 
   const handleAddListing = (listing: WebsiteListing) => {
     setListings(prev => [listing, ...prev]);
+  };
+
+  const handleUpdateListing = (updatedListing: WebsiteListing) => {
+    setListings(prev => prev.map(l => l.id === updatedListing.id ? updatedListing : l));
   };
 
   const renderDashboard = () => (
@@ -195,7 +201,8 @@ const App: React.FC = () => {
     return (
       <AdminDashboard 
         listings={listings} 
-        onAdd={handleAddListing} 
+        onAdd={handleAddListing}
+        onUpdate={handleUpdateListing}
         onDelete={handleDeleteListing}
         onLogout={() => setIsAdminLoggedIn(false)}
       />
