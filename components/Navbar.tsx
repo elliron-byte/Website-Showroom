@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Layout, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 interface NavbarProps {
   onNavigate: (view: 'dashboard' | 'showroom' | 'enquiries' | 'contact') => void;
@@ -12,13 +12,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeView }) => {
     <nav className="sticky top-0 z-50 glass border-b border-slate-200 px-4 md:px-8 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div 
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-3 cursor-pointer group"
           onClick={() => onNavigate('dashboard')}
         >
-          <div className="bg-indigo-950 p-2 rounded-lg">
-            <Layout className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">Investment</span>
+          <img 
+            src="https://iili.io/fGZeku4.png" 
+            alt="Showroom Logo" 
+            className="h-10 w-auto object-contain transition-transform group-hover:scale-105" 
+          />
+          <span className="text-xl font-bold tracking-tight text-slate-900">Showroom</span>
         </div>
         
         <div className="hidden md:flex items-center gap-8">

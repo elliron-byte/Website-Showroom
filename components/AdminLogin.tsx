@@ -26,8 +26,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 p-10">
+    <div className="min-h-screen flex items-center justify-center bg-main-pattern px-4">
+      <div className="max-w-md w-full bg-pattern rounded-[2.5rem] shadow-2xl border border-slate-200 p-10">
         <div className="text-center mb-10">
           <div className="w-16 h-16 bg-indigo-950 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <ShieldCheck className="w-8 h-8 text-white" />
@@ -45,7 +45,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                 type="text" 
                 value={number}
                 onChange={(e) => setNumber(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                 placeholder="Enter ID number"
                 required
               />
@@ -60,7 +60,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                 placeholder="••••••••"
                 required
               />

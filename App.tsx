@@ -8,7 +8,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { ContactUs } from './components/ContactUs';
 import { MOCK_LISTINGS } from './constants';
 import { WebsiteListing, ContactSubmission } from './types';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Brain, Settings, Globe, MessageCircle, CheckCircle2, Clock, Wallet, Send } from 'lucide-react';
 
 type ViewType = 'dashboard' | 'showroom' | 'enquiries' | 'contact' | 'admin';
 
@@ -140,7 +140,7 @@ const App: React.FC = () => {
           <p className="text-slate-500 font-medium">Browse our collection of digital assets ready for instant acquisition.</p>
         </div>
         <section className="mb-12">
-          <div className="bg-white p-4 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-200 shadow-sm">
+          <div className="bg-pattern p-4 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-200 shadow-sm">
             <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
               {['All', 'SaaS', 'E-commerce', 'Tool', 'Content', 'Marketplace'].map(cat => (
                 <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${categoryFilter === cat ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>{cat}</button>
@@ -155,6 +155,99 @@ const App: React.FC = () => {
         </section>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredListings.map(listing => <ListingCard key={listing.id} listing={listing} onClick={setSelectedListing} />)}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderEnquiries = () => (
+    <div className="max-w-7xl mx-auto px-6 py-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="text-center mb-20">
+        <h2 className="text-5xl font-black text-slate-900 mb-6 tracking-tight">Other Enquiries</h2>
+        <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+          I offer specialized training and custom development services tailored to help you succeed in the digital economy.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+        {/* Service 1 */}
+        <div className="bg-pattern p-10 rounded-[2.5rem] border border-slate-200 shadow-sm hover:border-indigo-400 transition-all group">
+          <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-8 group-hover:scale-110 transition-transform">
+            <Brain className="w-8 h-8" />
+          </div>
+          <h3 className="text-2xl font-black text-slate-900 mb-2">1. Mentorship</h3>
+          <p className="text-indigo-600 font-bold text-sm mb-6 uppercase tracking-wider">Build like this platform</p>
+          <p className="text-slate-500 mb-8 leading-relaxed">A 1-month hands-on training program covering layout, responsive design, and deployment.</p>
+          <div className="space-y-4 mb-10">
+            <div className="flex items-center gap-3 text-slate-700 font-semibold">
+              <Wallet className="w-5 h-5 text-emerald-500" /> GHS 200 Fee
+            </div>
+            <div className="flex items-center gap-3 text-slate-700 font-semibold">
+              <Clock className="w-5 h-5 text-indigo-500" /> 1 Month Duration
+            </div>
+          </div>
+          <ul className="space-y-3 mb-10">
+            {['Layout & Structure', 'Responsive Design', 'Live Practice'].map(item => (
+              <li key={item} className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Service 2 */}
+        <div className="bg-indigo-950 p-10 rounded-[2.5rem] shadow-xl text-white transform md:-translate-y-4">
+          <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-white mb-8">
+            <Settings className="w-8 h-8" />
+          </div>
+          <h3 className="text-2xl font-black mb-2 text-white">2. Setup & Usage</h3>
+          <p className="text-indigo-300 font-bold text-sm mb-6 uppercase tracking-wider">For Website Buyers</p>
+          <p className="text-indigo-100/70 mb-8 leading-relaxed">Exclusive training for clients who purchase an asset from this showroom.</p>
+          <div className="space-y-4 mb-10">
+            <div className="flex items-center gap-3 text-indigo-100 font-semibold">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Setup & Configuration
+            </div>
+            <div className="flex items-center gap-3 text-indigo-100 font-semibold">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Content Management
+            </div>
+            <div className="flex items-center gap-3 text-indigo-100 font-semibold">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Operational Confidence
+            </div>
+          </div>
+        </div>
+
+        {/* Service 3 */}
+        <div className="bg-pattern p-10 rounded-[2.5rem] border border-slate-200 shadow-sm hover:border-emerald-400 transition-all group">
+          <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-8 group-hover:scale-110 transition-transform">
+            <Globe className="w-8 h-8" />
+          </div>
+          <h3 className="text-2xl font-black text-slate-900 mb-2">3. Custom Dev</h3>
+          <p className="text-emerald-600 font-bold text-sm mb-6 uppercase tracking-wider">Tailored Solutions</p>
+          <p className="text-slate-500 mb-8 leading-relaxed">I build simple, clean, and functional websites based on your unique ideas or business requirements.</p>
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 italic text-slate-500 text-sm mb-10">
+            "You tell me what you want, I design and develop it."
+          </div>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest text-center">Flexible Pricing</p>
+        </div>
+      </div>
+
+      {/* Footer CTA */}
+      <div className="bg-indigo-600 rounded-[3rem] p-12 text-center text-white shadow-2xl shadow-indigo-600/20 max-w-4xl mx-auto">
+        <h3 className="text-3xl font-black mb-4">Interested in learning or owning a website?</h3>
+        <p className="text-indigo-100 text-lg mb-8 max-w-xl mx-auto">Contact me today to discuss your project and get started on your digital journey.</p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a 
+            href="https://t.me/yourusername" 
+            className="bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-sky-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-sky-500/20"
+          >
+            <Send className="w-6 h-6" /> Chat on Telegram
+          </a>
+          <button 
+            onClick={() => setActiveView('contact')}
+            className="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-black text-lg hover:bg-slate-50 transition-all shadow-sm"
+          >
+            Get in Touch
+          </button>
         </div>
       </div>
     </div>
@@ -176,18 +269,23 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      <Navbar onNavigate={setActiveView} activeView={activeView} />
-      {activeView === 'dashboard' && renderDashboard()}
-      {activeView === 'showroom' && renderShowroom()}
-      {activeView === 'contact' && <ContactUs onSubmit={handleContactSubmit} />}
-      {activeView === 'enquiries' && (
-        <div className="max-w-7xl mx-auto px-4 py-24 text-center">
-          <h2 className="text-4xl font-black text-slate-900 mb-4">Other Enquiries</h2>
-          <p className="text-slate-500 max-w-xl mx-auto mb-8">This section is currently under development.</p>
-          <button onClick={() => setActiveView('dashboard')} className="text-indigo-600 font-bold hover:underline">Return Home</button>
+    <div className="min-h-screen bg-main-pattern flex flex-col">
+      <div className="flex-grow">
+        <Navbar onNavigate={setActiveView} activeView={activeView} />
+        {activeView === 'dashboard' && renderDashboard()}
+        {activeView === 'showroom' && renderShowroom()}
+        {activeView === 'contact' && <ContactUs onSubmit={handleContactSubmit} />}
+        {activeView === 'enquiries' && renderEnquiries()}
+      </div>
+
+      <footer className="py-12 border-t border-slate-200 text-center">
+        <div className="max-w-7xl mx-auto px-4">
+          <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">
+            Copyright &copy; 2025 Showroom
+          </p>
         </div>
-      )}
+      </footer>
+
       {selectedListing && (
         <ListingDetail 
           listing={selectedListing} 

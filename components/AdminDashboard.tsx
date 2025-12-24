@@ -168,7 +168,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="flex gap-3">
           <button 
             onClick={() => setShowSettings(true)}
-            className="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-bold shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+            className="bg-pattern border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-bold shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
           >
             <ShieldAlert className="w-5 h-5" /> Security Settings
           </button>
@@ -181,7 +181,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
+      <div className="bg-pattern rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
         <table className="w-full text-left min-w-[800px]">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
@@ -231,15 +231,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <p className="text-slate-500 font-medium mb-10">You have {submissions.length} new messages from the contact form.</p>
       
       {submissions.length === 0 ? (
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 p-12 text-center border-dashed">
+        <div className="bg-pattern rounded-[2.5rem] border border-slate-200 p-12 text-center border-dashed">
           <Mail className="w-16 h-16 text-slate-200 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-slate-900 mb-2">Inbox is Empty</h3>
-          <p className="text-slate-500 max-w-sm mx-auto">Customer support messages will be listed here in real-time.</p>
+          <p className="text-slate-500 max-sm mx-auto">Customer support messages will be listed here in real-time.</p>
         </div>
       ) : (
         <div className="grid gap-6">
           {submissions.map((msg) => (
-            <div key={msg.id} className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row gap-6 relative group">
+            <div key={msg.id} className="bg-pattern rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row gap-6 relative group">
               <div className="flex-1">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
@@ -275,7 +275,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-main-pattern flex flex-col">
       <nav className="bg-indigo-950 text-white px-8 py-4 flex items-center justify-between shadow-xl sticky top-0 z-[100]">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('websites')}>
           <Globe className="w-6 h-6" />
@@ -303,7 +303,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {showSettings && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => { setShowSettings(false); setIs2FAVerified(false); }}></div>
-            <div className="relative bg-white w-full max-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="relative bg-pattern w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-black text-slate-900">Security Settings</h2>
                 <button type="button" onClick={() => { setShowSettings(false); setIs2FAVerified(false); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -371,7 +371,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {showAddForm && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowAddForm(false)}></div>
-            <form onSubmit={handleSubmit} className="relative bg-white w-full max-w-3xl rounded-[2.5rem] p-10 shadow-2xl my-8 animate-in zoom-in-95 duration-200">
+            <form onSubmit={handleSubmit} className="relative bg-pattern w-full max-w-3xl rounded-[2.5rem] p-10 shadow-2xl my-8 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-black text-slate-900">{editingId ? 'Edit Asset' : 'Register New Asset'}</h2>
                 <button type="button" onClick={() => setShowAddForm(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">

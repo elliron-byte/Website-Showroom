@@ -47,7 +47,7 @@ export const MarketAssistant: React.FC<MarketAssistantProps> = ({ currentListing
           <MessageSquare className="w-7 h-7" />
         </button>
       ) : (
-        <div className="bg-white w-[360px] md:w-[420px] h-[550px] rounded-[2.5rem] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
+        <div className="bg-pattern w-[360px] md:w-[420px] h-[550px] rounded-[2.5rem] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
           <div className="p-5 bg-indigo-950 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
@@ -78,7 +78,7 @@ export const MarketAssistant: React.FC<MarketAssistantProps> = ({ currentListing
                 <div className={`max-w-[85%] p-4 rounded-3xl text-sm leading-relaxed shadow-sm ${
                   msg.role === 'user' 
                   ? 'bg-indigo-600 text-white rounded-tr-none' 
-                  : 'bg-slate-100 text-slate-800 rounded-tl-none border border-slate-200'
+                  : 'bg-white text-slate-800 rounded-tl-none border border-slate-200 shadow-inner'
                 }`}>
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 </div>
@@ -86,7 +86,7 @@ export const MarketAssistant: React.FC<MarketAssistantProps> = ({ currentListing
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-slate-100 p-4 rounded-3xl rounded-tl-none border border-slate-200">
+                <div className="bg-white p-4 rounded-3xl rounded-tl-none border border-slate-200">
                   <div className="flex gap-1.5">
                     <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce delay-75"></div>
@@ -97,7 +97,7 @@ export const MarketAssistant: React.FC<MarketAssistantProps> = ({ currentListing
             )}
           </div>
 
-          <div className="p-6 border-t border-slate-100 bg-slate-50/80">
+          <div className="p-6 border-t border-slate-100 bg-slate-50/80 backdrop-blur-md">
             <div className="relative">
               <input 
                 type="text"

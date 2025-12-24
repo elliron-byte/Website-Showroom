@@ -44,7 +44,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ onSubmit }) => {
 
         {/* Right Side: Form Content */}
         <div className="order-1 md:order-2">
-          <div className="max-w-md ml-auto h-full flex flex-col">
+          <div className="max-w-md ml-auto h-full flex flex-col bg-pattern p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
             <div className="mb-10">
               <h1 className="text-4xl md:text-5xl font-bold text-[#2d2d5f] mb-4">Get in touch</h1>
               <p className="text-slate-500 text-lg leading-relaxed">

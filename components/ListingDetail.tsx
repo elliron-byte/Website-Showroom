@@ -17,7 +17,7 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, onClose, 
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative bg-white w-full max-w-6xl max-h-[95vh] overflow-y-auto rounded-[2.5rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col md:flex-row border border-slate-200">
+      <div className="relative bg-pattern w-full max-w-6xl max-h-[95vh] overflow-y-auto rounded-[2.5rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col md:flex-row border border-slate-200">
         <button 
           onClick={onClose}
           className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors z-10"

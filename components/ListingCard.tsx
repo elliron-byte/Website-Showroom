@@ -15,7 +15,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onClick }) =>
   return (
     <div 
       onClick={() => onClick(listing)}
-      className="group bg-white rounded-3xl overflow-hidden cursor-pointer border border-slate-200 hover:border-indigo-400 transition-all duration-300 card-shadow hover:-translate-y-1 flex flex-col h-full"
+      className="group bg-pattern rounded-3xl overflow-hidden cursor-pointer border border-slate-200 hover:border-indigo-400 transition-all duration-300 card-shadow hover:-translate-y-1 flex flex-col h-full"
     >
       <div className="relative h-48 overflow-hidden">
         <img 
