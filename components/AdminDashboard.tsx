@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, MessageSquare, Mail, LayoutGrid, Image as ImageIcon, Upload, X, Clock, Users, Code, Calendar, User, ShieldAlert, KeyRound } from 'lucide-react';
+import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, Mail, LayoutGrid, Image as ImageIcon, Upload, X, Clock, Code, Calendar, User, ShieldAlert, KeyRound } from 'lucide-react';
 import { WebsiteListing, ContactSubmission } from '../types';
 
 interface AdminDashboardProps {
@@ -35,7 +35,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   
   const [techStackString, setTechStackString] = useState('');
   
-  // New Credentials State
   const [newCreds, setNewCreds] = useState({
     number: '',
     password: ''
@@ -50,6 +49,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("This image is too large (over 2MB). Please use a smaller image to ensure the app stays fast and doesn't crash storage.");
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setNewSite(prev => ({ ...prev, image: reader.result as string }));
@@ -79,25 +82,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return;
       }
 
-      const price = Number(newSite.price) || 0;
-      const profit = Number(newSite.monthlyProfit) || 0;
-      const askingMultiple = profit > 0 ? Math.round((price / profit) * 100) / 100 : 0;
+      const parsedPrice = Number(newSite.price) || 0;
+      const parsedProfit = Number(newSite.monthlyProfit) || 0;
+      const parsedTraffic = Number(newSite.monthlyTraffic) || 0;
+      const parsedRevenue = Number(newSite.monthlyRevenue) || 0;
+      const askingMultiple = parsedProfit > 0 ? Math.round((parsedPrice / parsedProfit) * 100) / 100 : 0;
       const techStack = techStackString.split(',').map(s => s.trim()).filter(s => s !== '');
 
       const finalListing: WebsiteListing = {
         id: editingId || Math.random().toString(36).substr(2, 9),
-        name: newSite.name || 'Untitled Site',
-        url: newSite.url || '',
-        price: price,
-        description: newSite.description || '',
-        category: newSite.category || 'SaaS',
-        monthlyRevenue: Number(newSite.monthlyRevenue) || 0,
-        monthlyProfit: profit,
-        monthlyTraffic: Number(newSite.monthlyTraffic) || 0,
+        name: String(newSite.name || 'Untitled Site'),
+        url: String(newSite.url || ''),
+        price: parsedPrice,
+        description: String(newSite.description || ''),
+        category: (newSite.category as any) || 'SaaS',
+        monthlyRevenue: parsedRevenue,
+        monthlyProfit: parsedProfit,
+        monthlyTraffic: parsedTraffic,
         techStack: techStack.length > 0 ? techStack : ['React', 'Webflow'],
-        image: newSite.image,
+        image: String(newSite.image),
         performance: newSite.performance || Array(6).fill(null).map((_, i) => ({ month: ['Jan','Feb','Mar','Apr','May','Jun'][i], revenue: 0, visitors: 0 })),
-        age: newSite.age || 'Brand New',
+        age: String(newSite.age || 'Brand New'),
         askingMultiple: askingMultiple
       };
 
@@ -107,11 +112,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         onAdd(finalListing);
       }
 
+      // Explicitly close the form and clear state to avoid memory leaks or double submission
       setShowAddForm(false);
-      resetForm();
+      setTimeout(() => {
+        resetForm();
+      }, 100);
     } catch (err) {
       console.error("Error adding/updating asset:", err);
-      alert("Failed to save asset. Please check the console for details.");
+      alert("Failed to save asset. Please ensure all fields are filled correctly.");
     }
   };
 
@@ -120,7 +128,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (twoFAPassword === 'Bernice') {
       setIs2FAVerified(true);
       setSettingsError('');
-      // Pre-fill current credentials
       const stored = localStorage.getItem('admin_credentials');
       const current = stored ? JSON.parse(stored) : { number: '0256414239', password: 'KuKu2009' };
       setNewCreds(current);
@@ -296,7 +303,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {activeTab === 'websites' && renderWebsitesContent()}
         {activeTab === 'contact' && renderContactContent()}
 
-        {/* Security Settings Modal */}
         {showSettings && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => { setShowSettings(false); setIs2FAVerified(false); }}></div>
@@ -312,7 +318,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <form onSubmit={handleVerify2FA} className="space-y-6">
                   <div className="bg-indigo-50 p-6 rounded-2xl flex items-start gap-4 mb-6">
                     <ShieldAlert className="w-6 h-6 text-indigo-600 mt-1" />
-                    <p className="text-sm text-indigo-900 font-medium">To change credentials, please enter the 2FA password provided by the system administrator.</p>
+                    <p className="text-sm text-indigo-900 font-medium">To change credentials, please enter the 2FA password (Bernice).</p>
                   </div>
                   <div>
                     <label className="text-xs font-black uppercase text-slate-400 mb-2 block">2FA Password</label>
@@ -332,7 +338,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <form onSubmit={handleUpdateCredentials} className="space-y-6">
                    <div className="bg-emerald-50 p-6 rounded-2xl flex items-start gap-4 mb-6">
                     <KeyRound className="w-6 h-6 text-emerald-600 mt-1" />
-                    <p className="text-sm text-emerald-900 font-medium">2FA Verified. You can now update your admin credentials.</p>
+                    <p className="text-sm text-emerald-900 font-medium">2FA Verified. You can update admin credentials.</p>
                   </div>
                   <div>
                     <label className="text-xs font-black uppercase text-slate-400 mb-2 block">New Admin Number</label>
@@ -365,7 +371,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* Add/Edit Asset Modal */}
         {showAddForm && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowAddForm(false)}></div>
@@ -446,11 +451,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Price (GH₵)</label>
-                      <input type="number" value={newSite.price} onChange={e => setNewSite({...newSite, price: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
+                      <input type="number" value={newSite.price} onChange={e => setNewSite({...newSite, price: e.target.valueAsNumber || 0})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
                     </div>
                     <div>
                       <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Monthly Profit (GH₵)</label>
-                      <input type="number" value={newSite.monthlyProfit} onChange={e => setNewSite({...newSite, monthlyProfit: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
+                      <input type="number" value={newSite.monthlyProfit} onChange={e => setNewSite({...newSite, monthlyProfit: e.target.valueAsNumber || 0})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
                     </div>
                   </div>
                 </section>

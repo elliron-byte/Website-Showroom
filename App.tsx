@@ -17,13 +17,23 @@ const App: React.FC = () => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   
   const [listings, setListings] = useState<WebsiteListing[]>(() => {
-    const saved = localStorage.getItem('showroom_listings');
-    return saved ? JSON.parse(saved) : MOCK_LISTINGS;
+    try {
+      const saved = localStorage.getItem('showroom_listings');
+      return saved ? JSON.parse(saved) : MOCK_LISTINGS;
+    } catch (e) {
+      console.error("Failed to load listings from storage:", e);
+      return MOCK_LISTINGS;
+    }
   });
 
   const [submissions, setSubmissions] = useState<ContactSubmission[]>(() => {
-    const saved = localStorage.getItem('showroom_submissions');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('showroom_submissions');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load submissions from storage:", e);
+      return [];
+    }
   });
   
   const [selectedListing, setSelectedListing] = useState<WebsiteListing | null>(null);
@@ -31,11 +41,22 @@ const App: React.FC = () => {
   const [sortBy, setSortBy] = useState<'price_high' | 'price_low' | 'newest'>('newest');
 
   useEffect(() => {
-    localStorage.setItem('showroom_listings', JSON.stringify(listings));
+    try {
+      localStorage.setItem('showroom_listings', JSON.stringify(listings));
+    } catch (e) {
+      console.error("Failed to save listings to storage:", e);
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        alert("The image you uploaded is too large for browser storage. Please try a smaller image.");
+      }
+    }
   }, [listings]);
 
   useEffect(() => {
-    localStorage.setItem('showroom_submissions', JSON.stringify(submissions));
+    try {
+      localStorage.setItem('showroom_submissions', JSON.stringify(submissions));
+    } catch (e) {
+      console.error("Failed to save submissions to storage:", e);
+    }
   }, [submissions]);
 
   useEffect(() => {
@@ -44,10 +65,11 @@ const App: React.FC = () => {
   }, []);
 
   const filteredListings = useMemo(() => {
+    if (!Array.isArray(listings)) return [];
     let result = [...listings];
     if (categoryFilter !== 'All') result = result.filter(l => l.category === categoryFilter);
-    if (sortBy === 'price_high') result.sort((a, b) => b.price - a.price);
-    else if (sortBy === 'price_low') result.sort((a, b) => a.price - b.price);
+    if (sortBy === 'price_high') result.sort((a, b) => (b.price || 0) - (a.price || 0));
+    else if (sortBy === 'price_low') result.sort((a, b) => (a.price || 0) - (b.price || 0));
     return result;
   }, [listings, categoryFilter, sortBy]);
 
@@ -72,8 +94,13 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddListing = (listing: WebsiteListing) => setListings(prev => [listing, ...prev]);
-  const handleUpdateListing = (updatedListing: WebsiteListing) => setListings(prev => prev.map(l => l.id === updatedListing.id ? updatedListing : l));
+  const handleAddListing = (listing: WebsiteListing) => {
+    setListings(prev => [listing, ...prev]);
+  };
+
+  const handleUpdateListing = (updatedListing: WebsiteListing) => {
+    setListings(prev => prev.map(l => l.id === updatedListing.id ? updatedListing : l));
+  };
 
   const handleContactSellerAction = () => {
     setSelectedListing(null);
