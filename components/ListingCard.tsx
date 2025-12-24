@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users, DollarSign, ArrowRight } from 'lucide-react';
+import { Users, Banknote, ArrowRight } from 'lucide-react';
 import { WebsiteListing } from '../types';
 
 interface ListingCardProps {
@@ -10,7 +10,7 @@ interface ListingCardProps {
 
 export const ListingCard: React.FC<ListingCardProps> = ({ listing, onClick }) => {
   const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+    new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', maximumFractionDigits: 0 }).format(val);
 
   return (
     <div 
@@ -49,7 +49,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onClick }) =>
           <div className="flex flex-col">
             <span className="text-[10px] uppercase text-slate-400 font-bold mb-1">Monthly Net</span>
             <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-sm">
-              <DollarSign className="w-3.5 h-3.5" />
+              <Banknote className="w-3.5 h-3.5" />
               {formatCurrency(listing.monthlyProfit)}
             </div>
           </div>

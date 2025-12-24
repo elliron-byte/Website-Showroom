@@ -22,6 +22,14 @@ export interface WebsiteListing {
   askingMultiple: number;
 }
 
+export interface ContactSubmission {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  timestamp: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;

@@ -1,45 +1,40 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, MessageSquare, Mail, LayoutGrid, Image as ImageIcon, Upload, X } from 'lucide-react';
-import { WebsiteListing } from '../types';
+import React, { useState, useRef } from 'react';
+import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, MessageSquare, Mail, LayoutGrid, Image as ImageIcon, Upload, X, Clock, Users, Code, Calendar, User } from 'lucide-react';
+import { WebsiteListing, ContactSubmission } from '../types';
 
 interface AdminDashboardProps {
   listings: WebsiteListing[];
+  submissions: ContactSubmission[];
   onAdd: (listing: WebsiteListing) => void;
   onUpdate: (listing: WebsiteListing) => void;
   onDelete: (id: string) => void;
+  onDeleteSubmission: (id: string) => void;
   onLogout: () => void;
 }
 
 type AdminTab = 'websites' | 'enquiries' | 'contact';
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd, onUpdate, onDelete, onLogout }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
+  listings, 
+  submissions,
+  onAdd, 
+  onUpdate, 
+  onDelete, 
+  onDeleteSubmission,
+  onLogout 
+}) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('websites');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  const [techStackString, setTechStackString] = useState('');
+
   const [newSite, setNewSite] = useState<Partial<WebsiteListing>>({
-    name: '',
-    url: '',
-    price: 0,
-    monthlyProfit: 0,
-    category: 'SaaS',
-    description: '',
-    techStack: [],
-    performance: [
-      { month: 'Jan', revenue: 0, visitors: 0 },
-      { month: 'Feb', revenue: 0, visitors: 0 },
-      { month: 'Mar', revenue: 0, visitors: 0 },
-      { month: 'Apr', revenue: 0, visitors: 0 },
-      { month: 'May', revenue: 0, visitors: 0 },
-      { month: 'Jun', revenue: 0, visitors: 0 },
-    ],
-    age: 'Brand New',
-    askingMultiple: 0,
-    image: '',
-    monthlyRevenue: 0,
-    monthlyTraffic: 0
+    name: '', url: '', price: 0, monthlyProfit: 0, category: 'SaaS', description: '', techStack: [],
+    performance: Array(6).fill(null).map((_, i) => ({ month: ['Jan','Feb','Mar','Apr','May','Jun'][i], revenue: 0, visitors: 0 })),
+    age: 'Brand New', askingMultiple: 0, image: '', monthlyRevenue: 0, monthlyTraffic: 0
   });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +57,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
   const openEditForm = (site: WebsiteListing) => {
     setEditingId(site.id);
     setNewSite({ ...site });
+    setTechStackString(site.techStack.join(', '));
     setShowAddForm(true);
   };
 
@@ -71,26 +67,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
       alert("Please upload an image for the website.");
       return;
     }
+    const profit = newSite.monthlyProfit || 0;
+    const askingMultiple = profit > 0 ? Math.round((newSite.price! / profit) * 100) / 100 : 0;
+    const techStack = techStackString.split(',').map(s => s.trim()).filter(s => s !== '');
 
-    const profit = newSite.monthlyProfit || 1;
-    const askingMultiple = Math.round((newSite.price! / profit) * 100) / 100;
+    const finalListing: WebsiteListing = {
+      id: editingId || Math.random().toString(36).substr(2, 9),
+      name: newSite.name || 'Untitled Site',
+      url: newSite.url || '',
+      price: newSite.price || 0,
+      description: newSite.description || '',
+      category: newSite.category || 'SaaS',
+      monthlyRevenue: newSite.monthlyRevenue || 0,
+      monthlyProfit: profit,
+      monthlyTraffic: newSite.monthlyTraffic || 0,
+      techStack: techStack.length > 0 ? techStack : ['React', 'Webflow'],
+      image: newSite.image,
+      performance: newSite.performance || [],
+      age: newSite.age || 'Brand New',
+      askingMultiple: askingMultiple
+    };
 
-    if (editingId) {
-      const updatedListing: WebsiteListing = {
-        ...newSite as WebsiteListing,
-        id: editingId,
-        askingMultiple,
-      };
-      onUpdate(updatedListing);
-    } else {
-      const listing: WebsiteListing = {
-        ...newSite as WebsiteListing,
-        id: Math.random().toString(36).substr(2, 9),
-        askingMultiple,
-        techStack: newSite.techStack?.length ? newSite.techStack : ['React', 'Webflow'],
-      };
-      onAdd(listing);
-    }
+    if (editingId) onUpdate(finalListing);
+    else onAdd(finalListing);
 
     setShowAddForm(false);
     resetForm();
@@ -99,16 +98,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
   const resetForm = () => {
     setNewSite({
       name: '', url: '', price: 0, monthlyProfit: 0, category: 'SaaS', description: '', techStack: [], 
-      performance: [
-        { month: 'Jan', revenue: 0, visitors: 0 },
-        { month: 'Feb', revenue: 0, visitors: 0 },
-        { month: 'Mar', revenue: 0, visitors: 0 },
-        { month: 'Apr', revenue: 0, visitors: 0 },
-        { month: 'May', revenue: 0, visitors: 0 },
-        { month: 'Jun', revenue: 0, visitors: 0 },
-      ], 
+      performance: Array(6).fill(null).map((_, i) => ({ month: ['Jan','Feb','Mar','Apr','May','Jun'][i], revenue: 0, visitors: 0 })), 
       age: 'Brand New', image: '', monthlyRevenue: 0, monthlyTraffic: 0
     });
+    setTechStackString('');
     setEditingId(null);
   };
 
@@ -153,20 +146,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
                 <td className="px-8 py-6">
                   <span className="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 uppercase">{site.category}</span>
                 </td>
-                <td className="px-8 py-6 font-black text-slate-900">${site.price.toLocaleString()}</td>
-                <td className="px-8 py-6 text-emerald-600 font-bold">${site.monthlyProfit.toLocaleString()}</td>
+                <td className="px-8 py-6 font-black text-slate-900">GH₵{site.price.toLocaleString()}</td>
+                <td className="px-8 py-6 text-emerald-600 font-bold">GH₵{site.monthlyProfit.toLocaleString()}</td>
                 <td className="px-8 py-6 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <button 
-                      onClick={() => openEditForm(site)}
-                      className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
-                    >
+                    <button onClick={() => openEditForm(site)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={() => onDelete(site.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-all"
-                    >
+                    <button onClick={() => onDelete(site.id)} className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -179,62 +166,72 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
     </>
   );
 
-  const renderEnquiriesContent = () => (
-    <div>
-      <h1 className="text-4xl font-black text-slate-900 mb-2">Other Enquiries</h1>
-      <p className="text-slate-500 font-medium mb-10">Manage general requests and custom acquisition offers.</p>
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 p-12 text-center border-dashed">
-        <MessageSquare className="w-16 h-16 text-slate-200 mx-auto mb-6" />
-        <h3 className="text-xl font-bold text-slate-900 mb-2">No New Enquiries</h3>
-        <p className="text-slate-500 max-w-sm mx-auto">When users submit a request through the "Other Enquiries" page, they will appear here.</p>
-      </div>
-    </div>
-  );
-
   const renderContactContent = () => (
     <div>
-      <h1 className="text-4xl font-black text-slate-900 mb-2">Contact Submissions</h1>
-      <p className="text-slate-500 font-medium mb-10">Messages received through the public contact form.</p>
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 p-12 text-center border-dashed">
-        <Mail className="w-16 h-16 text-slate-200 mx-auto mb-6" />
-        <h3 className="text-xl font-bold text-slate-900 mb-2">Inbox is Empty</h3>
-        <p className="text-slate-500 max-w-sm mx-auto">Customer support messages will be listed here in real-time.</p>
-      </div>
+      <h1 className="text-4xl font-black text-slate-900 mb-2">Inbox</h1>
+      <p className="text-slate-500 font-medium mb-10">You have {submissions.length} new messages from the contact form.</p>
+      
+      {submissions.length === 0 ? (
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 p-12 text-center border-dashed">
+          <Mail className="w-16 h-16 text-slate-200 mx-auto mb-6" />
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Inbox is Empty</h3>
+          <p className="text-slate-500 max-w-sm mx-auto">Customer support messages will be listed here in real-time.</p>
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {submissions.map((msg) => (
+            <div key={msg.id} className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row gap-6 relative group">
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">{msg.name}</h4>
+                    <a href={`mailto:${msg.email}`} className="text-xs text-indigo-600 hover:underline flex items-center gap-1">
+                      <Mail className="w-3 h-3" /> {msg.email}
+                    </a>
+                  </div>
+                </div>
+                <div className="bg-slate-50 p-6 rounded-2xl text-slate-600 text-sm leading-relaxed mb-4">
+                  {msg.message}
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                  <Calendar className="w-3 h-3" /> {new Date(msg.timestamp).toLocaleString()}
+                </div>
+              </div>
+              <div className="flex items-start">
+                <button 
+                  onClick={() => onDeleteSubmission(msg.id)}
+                  className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-100 transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <nav className="bg-indigo-950 text-white px-8 py-4 flex items-center justify-between shadow-xl sticky top-0 z-[100]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('websites')}>
           <Globe className="w-6 h-6" />
           <span className="text-xl font-black uppercase tracking-tighter">Admin Center</span>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex gap-1">
-            <button 
-              onClick={() => setActiveTab('websites')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'websites' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-            >
+            <button onClick={() => setActiveTab('websites')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'websites' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
               <LayoutGrid className="w-4 h-4" /> Websites
             </button>
-            <button 
-              onClick={() => setActiveTab('enquiries')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'enquiries' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-            >
-              <MessageSquare className="w-4 h-4" /> Other Enquiries
-            </button>
-            <button 
-              onClick={() => setActiveTab('contact')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'contact' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-            >
-              <Mail className="w-4 h-4" /> Contact Us
+            <button onClick={() => setActiveTab('contact')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'contact' ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+              <Mail className="w-4 h-4" /> Inbox {submissions.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">{submissions.length}</span>}
             </button>
           </div>
-          <button 
-            onClick={onLogout}
-            className="flex items-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition-all"
-          >
+          <button onClick={onLogout} className="flex items-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition-all">
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
@@ -242,13 +239,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
 
       <main className="max-w-7xl mx-auto w-full px-4 md:px-8 py-12 flex-grow">
         {activeTab === 'websites' && renderWebsitesContent()}
-        {activeTab === 'enquiries' && renderEnquiriesContent()}
         {activeTab === 'contact' && renderContactContent()}
 
         {showAddForm && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowAddForm(false)}></div>
-            <form onSubmit={handleSubmit} className="relative bg-white w-full max-w-2xl rounded-[2.5rem] p-10 shadow-2xl my-8">
+            <form onSubmit={handleSubmit} className="relative bg-white w-full max-w-3xl rounded-[2.5rem] p-10 shadow-2xl my-8 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-black text-slate-900">{editingId ? 'Edit Asset' : 'Register New Asset'}</h2>
                 <button type="button" onClick={() => setShowAddForm(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -256,87 +252,71 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ listings, onAdd,
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="col-span-2">
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Website Name</label>
-                    <input required value={newSite.name} onChange={e => setNewSite({...newSite, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="e.g. CryptoPulse SaaS" />
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Asking Price ($)</label>
-                    <input required type="number" value={newSite.price} onChange={e => setNewSite({...newSite, price: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" />
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Category</label>
-                    <select value={newSite.category} onChange={e => setNewSite({...newSite, category: e.target.value as any})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
-                      <option value="SaaS">SaaS</option>
-                      <option value="E-commerce">E-commerce</option>
-                      <option value="Tool">Tool</option>
-                      <option value="Content">Content</option>
-                      <option value="Marketplace">Marketplace</option>
-                    </select>
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Image Upload</label>
-                    <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="group cursor-pointer border-2 border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50 rounded-2xl p-8 transition-all relative overflow-hidden flex flex-col items-center justify-center min-h-[160px]"
-                    >
-                      {newSite.image ? (
-                        <>
-                          <img src={newSite.image} className="absolute inset-0 w-full h-full object-cover opacity-20" />
-                          <div className="relative z-10 flex flex-col items-center">
-                            <ImageIcon className="w-8 h-8 text-indigo-600 mb-2" />
-                            <span className="text-xs font-bold text-slate-600">Image Uploaded</span>
-                            <span className="text-[10px] text-slate-400 mt-1">Click to change screenshot</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center">
-                          <Upload className="w-8 h-8 text-slate-300 group-hover:text-indigo-400 mb-3 transition-colors" />
-                          <span className="text-xs font-bold text-slate-500">Drop website screenshot here</span>
-                          <span className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest">or click to browse</span>
-                        </div>
-                      )}
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handleImageUpload} 
-                        accept="image/*" 
-                        className="hidden" 
-                      />
+              <div className="space-y-8">
+                <section>
+                  <h3 className="text-xs font-black uppercase text-indigo-600 mb-4 tracking-widest flex items-center gap-2">
+                    <Globe className="w-4 h-4" /> General Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Website Name</label>
+                      <input required value={newSite.name} onChange={e => setNewSite({...newSite, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="e.g. CryptoPulse SaaS" />
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Category</label>
+                      <select value={newSite.category} onChange={e => setNewSite({...newSite, category: e.target.value as any})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
+                        {['SaaS', 'E-commerce', 'Tool', 'Content', 'Marketplace'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Website URL</label>
+                      <input required value={newSite.url} onChange={e => setNewSite({...newSite, url: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="https://..." />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Description</label>
+                      <textarea required value={newSite.description} onChange={e => setNewSite({...newSite, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl h-24 focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none" placeholder="Briefly explain what the site does..." />
                     </div>
                   </div>
+                </section>
 
-                  <div>
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Monthly Profit ($)</label>
-                    <input required type="number" value={newSite.monthlyProfit} onChange={e => setNewSite({...newSite, monthlyProfit: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" />
+                <section>
+                  <h3 className="text-xs font-black uppercase text-indigo-600 mb-4 tracking-widest flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" /> Media & Tech
+                  </h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Hero Screenshot</label>
+                      <div onClick={() => fileInputRef.current?.click()} className="group cursor-pointer border-2 border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50 rounded-2xl p-6 transition-all relative overflow-hidden flex flex-col items-center justify-center min-h-[120px]">
+                        {newSite.image ? (
+                          <>
+                            <img src={newSite.image} className="absolute inset-0 w-full h-full object-cover opacity-20" />
+                            <div className="relative z-10 flex flex-col items-center text-center">
+                              <ImageIcon className="w-6 h-6 text-indigo-600 mb-1" />
+                              <span className="text-[10px] font-bold text-slate-600">Image Uploaded</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center text-center">
+                            <Upload className="w-6 h-6 text-slate-300 group-hover:text-indigo-400 mb-2" />
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Click to Upload</span>
+                          </div>
+                        )}
+                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                      </div>
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Tech Stack (Comma Separated)</label>
+                      <div className="relative">
+                        <Code className="absolute left-4 top-4 w-5 h-5 text-slate-300" />
+                        <textarea value={techStackString} onChange={e => setTechStackString(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 rounded-2xl h-[120px] focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none" placeholder="React, Node.js, Tailwind..." />
+                      </div>
+                    </div>
                   </div>
-
-                  <div>
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Monthly Revenue ($)</label>
-                    <input required type="number" value={newSite.monthlyRevenue} onChange={e => setNewSite({...newSite, monthlyRevenue: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" />
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Website URL</label>
-                    <input required value={newSite.url} onChange={e => setNewSite({...newSite, url: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="https://..." />
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Description</label>
-                    <textarea required value={newSite.description} onChange={e => setNewSite({...newSite, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl h-32 focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none" placeholder="Briefly explain what the site does, users, tech stack, etc..." />
-                  </div>
-                </div>
+                </section>
 
                 <div className="flex gap-4 pt-4">
-                  <button type="submit" className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors">
-                    {editingId ? 'Update Asset' : 'Save Asset'}
-                  </button>
-                  <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl hover:bg-slate-200 transition-colors">Cancel</button>
+                  <button type="submit" className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors uppercase tracking-widest text-sm">{editingId ? 'Update Asset' : 'Add Asset'}</button>
+                  <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl hover:bg-slate-200 transition-colors uppercase tracking-widest text-sm">Cancel</button>
                 </div>
               </div>
             </form>
