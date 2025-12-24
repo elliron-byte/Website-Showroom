@@ -112,7 +112,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         onAdd(finalListing);
       }
 
-      // Explicitly close the form and clear state to avoid memory leaks or double submission
       setShowAddForm(false);
       setTimeout(() => {
         resetForm();
@@ -189,7 +188,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <th className="px-8 py-5 text-xs font-black uppercase text-slate-400">Website</th>
               <th className="px-8 py-5 text-xs font-black uppercase text-slate-400">Category</th>
               <th className="px-8 py-5 text-xs font-black uppercase text-slate-400">Price</th>
-              <th className="px-8 py-5 text-xs font-black uppercase text-slate-400">Profit/mo</th>
               <th className="px-8 py-5 text-right text-xs font-black uppercase text-slate-400">Actions</th>
             </tr>
           </thead>
@@ -209,7 +207,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <span className="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 uppercase">{site.category}</span>
                 </td>
                 <td className="px-8 py-6 font-black text-slate-900">GH₵{(site.price || 0).toLocaleString()}</td>
-                <td className="px-8 py-6 text-emerald-600 font-bold">GH₵{(site.monthlyProfit || 0).toLocaleString()}</td>
                 <td className="px-8 py-6 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button onClick={() => openEditForm(site)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
@@ -306,7 +303,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {showSettings && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => { setShowSettings(false); setIs2FAVerified(false); }}></div>
-            <div className="relative bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="relative bg-white w-full max-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-black text-slate-900">Security Settings</h2>
                 <button type="button" onClick={() => { setShowSettings(false); setIs2FAVerified(false); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -446,16 +443,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <section>
                    <h3 className="text-xs font-black uppercase text-indigo-600 mb-4 tracking-widest flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> Performance Data (Optional)
+                    <Clock className="w-4 h-4" /> Listing Price
                   </h3>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6">
                     <div>
                       <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Price (GH₵)</label>
                       <input type="number" value={newSite.price} onChange={e => setNewSite({...newSite, price: e.target.valueAsNumber || 0})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Monthly Profit (GH₵)</label>
-                      <input type="number" value={newSite.monthlyProfit} onChange={e => setNewSite({...newSite, monthlyProfit: e.target.valueAsNumber || 0})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
                     </div>
                   </div>
                 </section>

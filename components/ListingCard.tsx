@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users, Banknote, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { WebsiteListing } from '../types';
 
 interface ListingCardProps {
@@ -27,42 +27,22 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onClick }) =>
           <span className="px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[10px] font-bold uppercase tracking-wider text-indigo-700 border border-indigo-100">
             {listing.category}
           </span>
-          <span className="px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-600 border border-slate-100">
-            {listing.age}
-          </span>
         </div>
       </div>
 
       <div className="p-6 flex flex-col flex-grow">
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
             {listing.name}
           </h3>
           <span className="text-xl font-black text-slate-900">{formatCurrency(listing.price)}</span>
         </div>
         
-        <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-grow">
+        <p className="text-sm text-slate-500 line-clamp-3 mb-6 flex-grow">
           {listing.description}
         </p>
 
-        <div className="grid grid-cols-2 gap-3 mb-5 border-y border-slate-100 py-4">
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-slate-400 font-bold mb-1">Monthly Net</span>
-            <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-sm">
-              <Banknote className="w-3.5 h-3.5" />
-              {formatCurrency(listing.monthlyProfit)}
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-slate-400 font-bold mb-1">Traffic</span>
-            <div className="flex items-center gap-1.5 text-blue-600 font-bold text-sm">
-              <Users className="w-3.5 h-3.5" />
-              {listing.monthlyTraffic.toLocaleString()}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mt-auto">
+        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
           <div className="flex gap-1.5">
             {listing.techStack.slice(0, 2).map((tech, i) => (
               <span key={i} className="text-[10px] text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md font-medium">
