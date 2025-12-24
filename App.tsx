@@ -15,10 +15,21 @@ type ViewType = 'dashboard' | 'showroom' | 'enquiries' | 'contact' | 'admin';
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [listings, setListings] = useState<WebsiteListing[]>(MOCK_LISTINGS);
+  
+  // Initialize listings from localStorage or fallback to MOCK_LISTINGS
+  const [listings, setListings] = useState<WebsiteListing[]>(() => {
+    const saved = localStorage.getItem('showroom_listings');
+    return saved ? JSON.parse(saved) : MOCK_LISTINGS;
+  });
+  
   const [selectedListing, setSelectedListing] = useState<WebsiteListing | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'price_high' | 'price_low' | 'newest'>('newest');
+
+  // Persistence effect
+  useEffect(() => {
+    localStorage.setItem('showroom_listings', JSON.stringify(listings));
+  }, [listings]);
 
   // Route Detection for Admin
   useEffect(() => {
