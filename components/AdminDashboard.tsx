@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, MessageSquare, Mail, LayoutGrid, Image as ImageIcon, Upload, X, Clock, Users, Code, Calendar, User } from 'lucide-react';
+import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, MessageSquare, Mail, LayoutGrid, Image as ImageIcon, Upload, X, Clock, Users, Code, Calendar, User, ShieldAlert, KeyRound } from 'lucide-react';
 import { WebsiteListing, ContactSubmission } from '../types';
 
 interface AdminDashboardProps {
@@ -26,10 +26,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('websites');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [is2FAVerified, setIs2FAVerified] = useState(false);
+  const [twoFAPassword, setTwoFAPassword] = useState('');
+  const [settingsError, setSettingsError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [techStackString, setTechStackString] = useState('');
+  
+  // New Credentials State
+  const [newCreds, setNewCreds] = useState({
+    number: '',
+    password: ''
+  });
 
   const [newSite, setNewSite] = useState<Partial<WebsiteListing>>({
     name: '', url: '', price: 0, monthlyProfit: 0, category: 'SaaS', description: '', techStack: [],
@@ -42,7 +52,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewSite({ ...newSite, image: reader.result as string });
+        setNewSite(prev => ({ ...prev, image: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -63,36 +73,73 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSite.image) {
-      alert("Please upload an image for the website.");
+    try {
+      if (!newSite.image) {
+        alert("Please upload an image for the website.");
+        return;
+      }
+
+      const price = Number(newSite.price) || 0;
+      const profit = Number(newSite.monthlyProfit) || 0;
+      const askingMultiple = profit > 0 ? Math.round((price / profit) * 100) / 100 : 0;
+      const techStack = techStackString.split(',').map(s => s.trim()).filter(s => s !== '');
+
+      const finalListing: WebsiteListing = {
+        id: editingId || Math.random().toString(36).substr(2, 9),
+        name: newSite.name || 'Untitled Site',
+        url: newSite.url || '',
+        price: price,
+        description: newSite.description || '',
+        category: newSite.category || 'SaaS',
+        monthlyRevenue: Number(newSite.monthlyRevenue) || 0,
+        monthlyProfit: profit,
+        monthlyTraffic: Number(newSite.monthlyTraffic) || 0,
+        techStack: techStack.length > 0 ? techStack : ['React', 'Webflow'],
+        image: newSite.image,
+        performance: newSite.performance || Array(6).fill(null).map((_, i) => ({ month: ['Jan','Feb','Mar','Apr','May','Jun'][i], revenue: 0, visitors: 0 })),
+        age: newSite.age || 'Brand New',
+        askingMultiple: askingMultiple
+      };
+
+      if (editingId) {
+        onUpdate(finalListing);
+      } else {
+        onAdd(finalListing);
+      }
+
+      setShowAddForm(false);
+      resetForm();
+    } catch (err) {
+      console.error("Error adding/updating asset:", err);
+      alert("Failed to save asset. Please check the console for details.");
+    }
+  };
+
+  const handleVerify2FA = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (twoFAPassword === 'Bernice') {
+      setIs2FAVerified(true);
+      setSettingsError('');
+      // Pre-fill current credentials
+      const stored = localStorage.getItem('admin_credentials');
+      const current = stored ? JSON.parse(stored) : { number: '0256414239', password: 'KuKu2009' };
+      setNewCreds(current);
+    } else {
+      setSettingsError('Incorrect 2FA password.');
+    }
+  };
+
+  const handleUpdateCredentials = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCreds.number || !newCreds.password) {
+      setSettingsError('Number and password cannot be empty.');
       return;
     }
-    const profit = newSite.monthlyProfit || 0;
-    const askingMultiple = profit > 0 ? Math.round((newSite.price! / profit) * 100) / 100 : 0;
-    const techStack = techStackString.split(',').map(s => s.trim()).filter(s => s !== '');
-
-    const finalListing: WebsiteListing = {
-      id: editingId || Math.random().toString(36).substr(2, 9),
-      name: newSite.name || 'Untitled Site',
-      url: newSite.url || '',
-      price: newSite.price || 0,
-      description: newSite.description || '',
-      category: newSite.category || 'SaaS',
-      monthlyRevenue: newSite.monthlyRevenue || 0,
-      monthlyProfit: profit,
-      monthlyTraffic: newSite.monthlyTraffic || 0,
-      techStack: techStack.length > 0 ? techStack : ['React', 'Webflow'],
-      image: newSite.image,
-      performance: newSite.performance || [],
-      age: newSite.age || 'Brand New',
-      askingMultiple: askingMultiple
-    };
-
-    if (editingId) onUpdate(finalListing);
-    else onAdd(finalListing);
-
-    setShowAddForm(false);
-    resetForm();
+    localStorage.setItem('admin_credentials', JSON.stringify(newCreds));
+    alert('Credentials updated successfully. Please use these for your next login.');
+    setShowSettings(false);
+    setIs2FAVerified(false);
+    setTwoFAPassword('');
   };
 
   const resetForm = () => {
@@ -112,12 +159,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <h1 className="text-4xl font-black text-slate-900">Manage Showroom</h1>
           <p className="text-slate-500 font-medium mt-1">Total Assets: {listings.length}</p>
         </div>
-        <button 
-          onClick={openAddForm}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" /> Add Website
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setShowSettings(true)}
+            className="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-bold shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+          >
+            <ShieldAlert className="w-5 h-5" /> Security Settings
+          </button>
+          <button 
+            onClick={openAddForm}
+            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" /> Add Website
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden overflow-x-auto">
@@ -146,8 +201,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <td className="px-8 py-6">
                   <span className="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 uppercase">{site.category}</span>
                 </td>
-                <td className="px-8 py-6 font-black text-slate-900">GH₵{site.price.toLocaleString()}</td>
-                <td className="px-8 py-6 text-emerald-600 font-bold">GH₵{site.monthlyProfit.toLocaleString()}</td>
+                <td className="px-8 py-6 font-black text-slate-900">GH₵{(site.price || 0).toLocaleString()}</td>
+                <td className="px-8 py-6 text-emerald-600 font-bold">GH₵{(site.monthlyProfit || 0).toLocaleString()}</td>
                 <td className="px-8 py-6 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <button onClick={() => openEditForm(site)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
@@ -241,6 +296,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {activeTab === 'websites' && renderWebsitesContent()}
         {activeTab === 'contact' && renderContactContent()}
 
+        {/* Security Settings Modal */}
+        {showSettings && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => { setShowSettings(false); setIs2FAVerified(false); }}></div>
+            <div className="relative bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-black text-slate-900">Security Settings</h2>
+                <button type="button" onClick={() => { setShowSettings(false); setIs2FAVerified(false); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                  <X className="w-6 h-6 text-slate-400" />
+                </button>
+              </div>
+
+              {!is2FAVerified ? (
+                <form onSubmit={handleVerify2FA} className="space-y-6">
+                  <div className="bg-indigo-50 p-6 rounded-2xl flex items-start gap-4 mb-6">
+                    <ShieldAlert className="w-6 h-6 text-indigo-600 mt-1" />
+                    <p className="text-sm text-indigo-900 font-medium">To change credentials, please enter the 2FA password provided by the system administrator.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">2FA Password</label>
+                    <input 
+                      required 
+                      type="password"
+                      value={twoFAPassword} 
+                      onChange={e => setTwoFAPassword(e.target.value)} 
+                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" 
+                      placeholder="Enter 2FA password" 
+                    />
+                  </div>
+                  {settingsError && <p className="text-red-500 text-xs font-bold">{settingsError}</p>}
+                  <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors uppercase tracking-widest text-sm">Verify 2FA</button>
+                </form>
+              ) : (
+                <form onSubmit={handleUpdateCredentials} className="space-y-6">
+                   <div className="bg-emerald-50 p-6 rounded-2xl flex items-start gap-4 mb-6">
+                    <KeyRound className="w-6 h-6 text-emerald-600 mt-1" />
+                    <p className="text-sm text-emerald-900 font-medium">2FA Verified. You can now update your admin credentials.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">New Admin Number</label>
+                    <input 
+                      required 
+                      value={newCreds.number} 
+                      onChange={e => setNewCreds({...newCreds, number: e.target.value})} 
+                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" 
+                      placeholder="New Number" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-black uppercase text-slate-400 mb-2 block">New Secret Password</label>
+                    <input 
+                      required 
+                      type="password"
+                      value={newCreds.password} 
+                      onChange={e => setNewCreds({...newCreds, password: e.target.value})} 
+                      className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none" 
+                      placeholder="New Secret Password" 
+                    />
+                  </div>
+                  {settingsError && <p className="text-red-500 text-xs font-bold">{settingsError}</p>}
+                  <div className="flex gap-4">
+                    <button type="submit" className="flex-1 bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-emerald-700 transition-colors uppercase tracking-widest text-sm">Save Changes</button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit Asset Modal */}
         {showAddForm && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowAddForm(false)}></div>
@@ -252,7 +377,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-8 h-[60vh] overflow-y-auto px-2">
                 <section>
                   <h3 className="text-xs font-black uppercase text-indigo-600 mb-4 tracking-widest flex items-center gap-2">
                     <Globe className="w-4 h-4" /> General Information
@@ -274,7 +399,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                     <div className="col-span-2">
                       <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Description</label>
-                      <textarea required value={newSite.description} onChange={e => setNewSite({...newSite, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl h-24 focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none" placeholder="Briefly explain what the site does..." />
+                      <textarea required value={newSite.description} onChange={e => setNewSite({...newSite, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl h-32 focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none" placeholder="Briefly explain what the site does..." />
                     </div>
                   </div>
                 </section>
@@ -314,10 +439,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </section>
 
-                <div className="flex gap-4 pt-4">
-                  <button type="submit" className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors uppercase tracking-widest text-sm">{editingId ? 'Update Asset' : 'Add Asset'}</button>
-                  <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl hover:bg-slate-200 transition-colors uppercase tracking-widest text-sm">Cancel</button>
-                </div>
+                <section>
+                   <h3 className="text-xs font-black uppercase text-indigo-600 mb-4 tracking-widest flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> Performance Data (Optional)
+                  </h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Price (GH₵)</label>
+                      <input type="number" value={newSite.price} onChange={e => setNewSite({...newSite, price: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Monthly Profit (GH₵)</label>
+                      <input type="number" value={newSite.monthlyProfit} onChange={e => setNewSite({...newSite, monthlyProfit: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none" />
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div className="flex gap-4 pt-8 border-t border-slate-100 mt-6">
+                <button type="submit" className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors uppercase tracking-widest text-sm">{editingId ? 'Update Asset' : 'Add Asset'}</button>
+                <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl hover:bg-slate-200 transition-colors uppercase tracking-widest text-sm">Cancel</button>
               </div>
             </form>
           </div>

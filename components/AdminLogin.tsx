@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lock, User, ShieldCheck } from 'lucide-react';
 
 interface AdminLoginProps {
@@ -13,7 +13,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (number === '0256414239' && password === 'KuKu2009') {
+    
+    // Get stored credentials or use defaults
+    const stored = localStorage.getItem('admin_credentials');
+    const credentials = stored ? JSON.parse(stored) : { number: '0256414239', password: 'KuKu2009' };
+
+    if (number === credentials.number && password === credentials.password) {
       onLogin(true);
     } else {
       setError('Invalid credentials. Please check your number and password.');
