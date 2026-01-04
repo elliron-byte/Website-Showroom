@@ -9,7 +9,7 @@ import { ContactUs } from './components/ContactUs';
 import { MOCK_LISTINGS } from './constants';
 import { WebsiteListing, ContactSubmission } from './types';
 import { supabase } from './supabaseClient';
-import { ArrowRight, Brain, Settings, Globe, MessageCircle, CheckCircle2, Clock, Wallet, Send, Loader2 } from 'lucide-react';
+import { ArrowRight, Brain, Settings, Globe, MessageCircle, CheckCircle2, Clock, Wallet, Send, Loader2, PackageOpen } from 'lucide-react';
 
 type ViewType = 'dashboard' | 'showroom' | 'enquiries' | 'contact' | 'admin';
 
@@ -79,11 +79,8 @@ const App: React.FC = () => {
 
       if (listingsError) throw listingsError;
       
-      if (!listingsData || listingsData.length === 0) {
-        setListings(MOCK_LISTINGS);
-      } else {
-        setListings(listingsData);
-      }
+      // Removed MOCK_LISTINGS fallback to ensure only user data is shown
+      setListings(listingsData || []);
 
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
@@ -95,7 +92,7 @@ const App: React.FC = () => {
 
     } catch (error) {
       console.error("Error fetching from Supabase:", error);
-      setListings(MOCK_LISTINGS);
+      setListings([]);
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +169,7 @@ const App: React.FC = () => {
   const renderShowroom = () => (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="max-w-7xl mx-auto px-4 md:px-8 pt-12">
-        <div className="mb-10">
+        <div className="mb-10 text-center md:text-left">
           <h2 className="text-4xl font-black text-slate-900 mb-2">Website Showroom</h2>
           <p className="text-slate-500 font-medium">Browse our collection of digital assets ready for instant acquisition.</p>
         </div>
@@ -192,9 +189,27 @@ const App: React.FC = () => {
         </section>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="flex flex-col items-center justify-center py-24 space-y-4">
             <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
             <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Syncing with cloud...</p>
+          </div>
+        ) : filteredListings.length === 0 ? (
+          <div className="text-center py-24 px-8 bg-pattern rounded-[3rem] border border-dashed border-slate-200 animate-in fade-in zoom-in-95 duration-500">
+            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8 border border-slate-100">
+              <PackageOpen className="w-10 h-10 text-slate-300" />
+            </div>
+            <h3 className="text-3xl font-black text-slate-900 mb-4">No assets found</h3>
+            <p className="text-slate-500 max-w-sm mx-auto font-medium text-lg leading-relaxed">
+              We currently don't have any listings {categoryFilter !== 'All' ? `in the ${categoryFilter} category` : ''}. Check back soon!
+            </p>
+            {categoryFilter !== 'All' && (
+              <button 
+                onClick={() => setCategoryFilter('All')}
+                className="mt-8 text-indigo-600 font-black uppercase tracking-widest text-xs hover:underline"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
