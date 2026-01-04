@@ -25,6 +25,14 @@ const App: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'price_high' | 'price_low' | 'newest'>('newest');
 
+  // Check for admin path in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('path') === 'admin') {
+      setActiveView('admin');
+    }
+  }, []);
+
   // Real-time synchronization logic
   useEffect(() => {
     fetchInitialData();
@@ -106,7 +114,6 @@ const App: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this listing?')) {
       const { error } = await supabase.from('listings').delete().eq('id', id);
       if (error) alert("Failed to delete: " + error.message);
-      // setListings update is handled by realtime listener
     }
   };
 
@@ -114,7 +121,6 @@ const App: React.FC = () => {
     const newSubmission = { ...data, timestamp: new Date().toISOString() };
     const { error } = await supabase.from('submissions').insert([newSubmission]);
     if (error) console.error("Contact submit error:", error);
-    // setSubmissions update is handled by realtime listener
   };
 
   const handleDeleteSubmission = async (id: string) => {
@@ -138,7 +144,6 @@ const App: React.FC = () => {
     setActiveView('contact');
   };
 
-  // Rendering logic remains same...
   const renderDashboard = () => (
     <div className="animate-in fade-in duration-500">
       <header className="relative pt-24 pb-20 px-4 overflow-hidden">
@@ -210,7 +215,6 @@ const App: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-        {/* Service 1 */}
         <div className="bg-pattern p-10 rounded-[2.5rem] border border-slate-200 shadow-sm hover:border-indigo-400 transition-all group">
           <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-8 group-hover:scale-110 transition-transform">
             <Brain className="w-8 h-8" />
@@ -235,7 +239,6 @@ const App: React.FC = () => {
           </ul>
         </div>
 
-        {/* Service 2 */}
         <div className="bg-indigo-950 p-10 rounded-[2.5rem] shadow-xl text-white transform md:-translate-y-4">
           <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-white mb-8">
             <Settings className="w-8 h-8" />
@@ -256,7 +259,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Service 3 */}
         <div className="bg-pattern p-10 rounded-[2.5rem] border border-slate-200 shadow-sm hover:border-emerald-400 transition-all group">
           <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-8 group-hover:scale-110 transition-transform">
             <Globe className="w-8 h-8" />
@@ -271,7 +273,6 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Footer CTA */}
       <div className="bg-indigo-600 rounded-[3rem] p-12 text-center text-white shadow-2xl shadow-indigo-600/20 max-w-4xl mx-auto">
         <h3 className="text-3xl font-black mb-4">Interested in learning or owning a website?</h3>
         <p className="text-indigo-100 text-lg mb-8 max-w-xl mx-auto">Contact me today to discuss your project and get started on your digital journey.</p>
