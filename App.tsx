@@ -25,15 +25,45 @@ const App: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'price_high' | 'price_low' | 'newest'>('newest');
 
-  // Fetch data from Supabase on mount
+  // Real-time synchronization logic
   useEffect(() => {
     fetchInitialData();
+
+    // Subscribe to real-time changes on the listings table
+    const listingsChannel = supabase
+      .channel('public:listings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setListings(prev => [payload.new as WebsiteListing, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setListings(prev => prev.map(l => l.id === payload.new.id ? payload.new as WebsiteListing : l));
+        } else if (payload.eventType === 'DELETE') {
+          setListings(prev => prev.filter(l => l.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+
+    // Subscribe to real-time changes on the submissions table (for admin inbox)
+    const submissionsChannel = supabase
+      .channel('public:submissions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setSubmissions(prev => [payload.new as ContactSubmission, ...prev]);
+        } else if (payload.eventType === 'DELETE') {
+          setSubmissions(prev => prev.filter(s => s.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(listingsChannel);
+      supabase.removeChannel(submissionsChannel);
+    };
   }, []);
 
   const fetchInitialData = async () => {
     setIsLoading(true);
     try {
-      // Fetch listings
       const { data: listingsData, error: listingsError } = await supabase
         .from('listings')
         .select('*')
@@ -41,14 +71,12 @@ const App: React.FC = () => {
 
       if (listingsError) throw listingsError;
       
-      // Use mock data if DB is empty
       if (!listingsData || listingsData.length === 0) {
         setListings(MOCK_LISTINGS);
       } else {
         setListings(listingsData);
       }
 
-      // Fetch submissions (only needed for admin, but we load here for simplicity)
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('*')
@@ -59,7 +87,6 @@ const App: React.FC = () => {
 
     } catch (error) {
       console.error("Error fetching from Supabase:", error);
-      // Fallback to mock data on error
       setListings(MOCK_LISTINGS);
     } finally {
       setIsLoading(false);
@@ -78,65 +105,32 @@ const App: React.FC = () => {
   const handleDeleteListing = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this listing?')) {
       const { error } = await supabase.from('listings').delete().eq('id', id);
-      if (!error) {
-        setListings(prev => prev.filter(l => l.id !== id));
-      } else {
-        alert("Failed to delete from database: " + error.message);
-      }
+      if (error) alert("Failed to delete: " + error.message);
+      // setListings update is handled by realtime listener
     }
   };
 
   const handleContactSubmit = async (data: Omit<ContactSubmission, 'id' | 'timestamp'>) => {
-    const newSubmission = {
-      ...data,
-      timestamp: new Date().toISOString()
-    };
-    
-    const { data: inserted, error } = await supabase
-      .from('submissions')
-      .insert([newSubmission])
-      .select();
-
-    if (!error && inserted) {
-      setSubmissions(prev => [inserted[0], ...prev]);
-    } else {
-      console.error("Supabase insert error:", error);
-    }
+    const newSubmission = { ...data, timestamp: new Date().toISOString() };
+    const { error } = await supabase.from('submissions').insert([newSubmission]);
+    if (error) console.error("Contact submit error:", error);
+    // setSubmissions update is handled by realtime listener
   };
 
   const handleDeleteSubmission = async (id: string) => {
     if (window.confirm('Delete this message?')) {
-      const { error } = await supabase.from('submissions').delete().eq('id', id);
-      if (!error) {
-        setSubmissions(prev => prev.filter(s => s.id !== id));
-      }
+      await supabase.from('submissions').delete().eq('id', id);
     }
   };
 
   const handleAddListing = async (listing: WebsiteListing) => {
-    const { data: inserted, error } = await supabase
-      .from('listings')
-      .insert([listing])
-      .select();
-
-    if (!error && inserted) {
-      setListings(prev => [inserted[0], ...prev]);
-    } else {
-      alert("Error adding listing to cloud: " + error?.message);
-    }
+    const { error } = await supabase.from('listings').insert([listing]);
+    if (error) alert("Error adding: " + error.message);
   };
 
   const handleUpdateListing = async (updatedListing: WebsiteListing) => {
-    const { error } = await supabase
-      .from('listings')
-      .update(updatedListing)
-      .eq('id', updatedListing.id);
-
-    if (!error) {
-      setListings(prev => prev.map(l => l.id === updatedListing.id ? updatedListing : l));
-    } else {
-      alert("Error updating listing in cloud: " + error.message);
-    }
+    const { error } = await supabase.from('listings').update(updatedListing).eq('id', updatedListing.id);
+    if (error) alert("Error updating: " + error.message);
   };
 
   const handleContactSellerAction = () => {
@@ -144,6 +138,7 @@ const App: React.FC = () => {
     setActiveView('contact');
   };
 
+  // Rendering logic remains same...
   const renderDashboard = () => (
     <div className="animate-in fade-in duration-500">
       <header className="relative pt-24 pb-20 px-4 overflow-hidden">

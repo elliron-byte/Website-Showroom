@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { Lock, User, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Lock, User, ShieldCheck, Loader2 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 interface AdminLoginProps {
   onLogin: (success: boolean) => void;
@@ -10,18 +11,37 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   const [number, setNumber] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsVerifying(true);
+    setError('');
     
-    // Get stored credentials or use defaults
-    const stored = localStorage.getItem('admin_credentials');
-    const credentials = stored ? JSON.parse(stored) : { number: '0256414239', password: 'KuKu2009' };
+    try {
+      // Get global credentials from Supabase
+      const { data, error: fetchError } = await supabase
+        .from('admin_settings')
+        .select('*')
+        .single();
 
-    if (number === credentials.number && password === credentials.password) {
-      onLogin(true);
-    } else {
-      setError('Invalid credentials. Please check your number and password.');
+      if (fetchError) throw fetchError;
+
+      if (number === data.number && password === data.password) {
+        onLogin(true);
+      } else {
+        setError('Invalid credentials. Please check your number and password.');
+      }
+    } catch (err) {
+      console.error("Login verify error:", err);
+      // Fallback logic if table doesn't exist yet
+      if (number === '0256414239' && password === 'KuKu2009') {
+        onLogin(true);
+      } else {
+        setError('Connection error or invalid credentials.');
+      }
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -33,7 +53,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
             <ShieldCheck className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-3xl font-black text-slate-900">Admin Portal</h2>
-          <p className="text-slate-500 font-medium mt-2">Secure access for showroom managers</p>
+          <p className="text-slate-500 font-medium mt-2">Secure cloud access across all devices</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -75,9 +95,11 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
 
           <button 
             type="submit"
-            className="w-full bg-indigo-950 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-950/20"
+            disabled={isVerifying}
+            className="w-full bg-indigo-950 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-950/20 flex items-center justify-center gap-2"
           >
-            Authenticate
+            {isVerifying && <Loader2 className="w-5 h-5 animate-spin" />}
+            {isVerifying ? 'Authenticating...' : 'Authenticate'}
           </button>
         </form>
         

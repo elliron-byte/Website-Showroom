@@ -1,7 +1,8 @@
 
-import React, { useState, useRef } from 'react';
-import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, Mail, LayoutGrid, Image as ImageIcon, Upload, X, Clock, Code, Calendar, User, ShieldAlert, KeyRound } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, Trash2, Edit, Globe, ExternalLink, LogOut, Mail, LayoutGrid, Image as ImageIcon, Upload, X, Clock, Code, Calendar, User, ShieldAlert, KeyRound, Loader2 } from 'lucide-react';
 import { WebsiteListing, ContactSubmission } from '../types';
+import { supabase } from '../supabaseClient';
 
 interface AdminDashboardProps {
   listings: WebsiteListing[];
@@ -31,6 +32,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [twoFAPassword, setTwoFAPassword] = useState('');
   const [settingsError, setSettingsError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [techStackString, setTechStackString] = useState('');
@@ -50,7 +52,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert("This image is too large (over 2MB). Please use a smaller image to ensure the app stays fast and doesn't crash storage.");
+        alert("This image is too large (over 2MB). Please use a smaller image.");
         return;
       }
       const reader = new FileReader();
@@ -113,39 +115,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
 
       setShowAddForm(false);
-      setTimeout(() => {
-        resetForm();
-      }, 100);
+      setTimeout(() => { resetForm(); }, 100);
     } catch (err) {
-      console.error("Error adding/updating asset:", err);
-      alert("Failed to save asset. Please ensure all fields are filled correctly.");
+      console.error("Error saving asset:", err);
+      alert("Failed to save asset.");
     }
   };
 
-  const handleVerify2FA = (e: React.FormEvent) => {
+  const handleVerify2FA = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (twoFAPassword === 'Bernice') {
-      setIs2FAVerified(true);
-      setSettingsError('');
-      const stored = localStorage.getItem('admin_credentials');
-      const current = stored ? JSON.parse(stored) : { number: '0256414239', password: 'KuKu2009' };
-      setNewCreds(current);
-    } else {
-      setSettingsError('Incorrect 2FA password.');
+    setIsVerifying(true);
+    try {
+      const { data, error } = await supabase.from('admin_settings').select('*').single();
+      if (error) throw error;
+
+      if (twoFAPassword === data.two_fa_password) {
+        setIs2FAVerified(true);
+        setSettingsError('');
+        setNewCreds({ number: data.number, password: data.password });
+      } else {
+        setSettingsError('Incorrect 2FA password.');
+      }
+    } catch (err) {
+      setSettingsError('Security verification failed.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
-  const handleUpdateCredentials = (e: React.FormEvent) => {
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleUpdateCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCreds.number || !newCreds.password) {
-      setSettingsError('Number and password cannot be empty.');
+      setSettingsError('Fields cannot be empty.');
       return;
     }
-    localStorage.setItem('admin_credentials', JSON.stringify(newCreds));
-    alert('Credentials updated successfully. Please use these for your next login.');
-    setShowSettings(false);
-    setIs2FAVerified(false);
-    setTwoFAPassword('');
+    
+    setIsSavingSettings(true);
+    try {
+      const { error } = await supabase
+        .from('admin_settings')
+        .update({ number: newCreds.number, password: newCreds.password })
+        .eq('id', 1);
+
+      if (error) throw error;
+      
+      alert('Global credentials updated successfully. These now apply to all devices.');
+      setShowSettings(false);
+      setIs2FAVerified(false);
+      setTwoFAPassword('');
+    } catch (err) {
+      setSettingsError('Failed to save to cloud.');
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
   const resetForm = () => {
@@ -228,13 +252,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const renderContactContent = () => (
     <div>
       <h1 className="text-4xl font-black text-slate-900 mb-2">Inbox</h1>
-      <p className="text-slate-500 font-medium mb-10">You have {submissions.length} new messages from the contact form.</p>
+      <p className="text-slate-500 font-medium mb-10">You have {submissions.length} new messages.</p>
       
       {submissions.length === 0 ? (
         <div className="bg-pattern rounded-[2.5rem] border border-slate-200 p-12 text-center border-dashed">
           <Mail className="w-16 h-16 text-slate-200 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-slate-900 mb-2">Inbox is Empty</h3>
-          <p className="text-slate-500 max-w-sm mx-auto">Customer support messages will be listed here in real-time.</p>
+          <p className="text-slate-500 max-w-sm mx-auto">Messages from all phones will appear here instantly.</p>
         </div>
       ) : (
         <div className="grid gap-6">
@@ -329,13 +353,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </div>
                   {settingsError && <p className="text-red-500 text-xs font-bold">{settingsError}</p>}
-                  <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors uppercase tracking-widest text-sm">Verify 2FA</button>
+                  <button type="submit" disabled={isVerifying} className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition-colors uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+                    {isVerifying && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Verify 2FA
+                  </button>
                 </form>
               ) : (
                 <form onSubmit={handleUpdateCredentials} className="space-y-6">
                    <div className="bg-emerald-50 p-6 rounded-2xl flex items-start gap-4 mb-6">
                     <KeyRound className="w-6 h-6 text-emerald-600 mt-1" />
-                    <p className="text-sm text-emerald-900 font-medium">2FA Verified. You can update admin credentials.</p>
+                    <p className="text-sm text-emerald-900 font-medium">2FA Verified. Updating global settings...</p>
                   </div>
                   <div>
                     <label className="text-xs font-black uppercase text-slate-400 mb-2 block">New Admin Number</label>
@@ -360,7 +387,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                   {settingsError && <p className="text-red-500 text-xs font-bold">{settingsError}</p>}
                   <div className="flex gap-4">
-                    <button type="submit" className="flex-1 bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-emerald-700 transition-colors uppercase tracking-widest text-sm">Save Changes</button>
+                    <button type="submit" disabled={isSavingSettings} className="flex-1 bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-emerald-700 transition-colors uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+                      {isSavingSettings && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {isSavingSettings ? 'Saving...' : 'Save Changes'}
+                    </button>
                   </div>
                 </form>
               )}
