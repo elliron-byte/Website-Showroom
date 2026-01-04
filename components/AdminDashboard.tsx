@@ -234,7 +234,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="bg-pattern rounded-[2.5rem] border border-slate-200 p-12 text-center border-dashed">
           <Mail className="w-16 h-16 text-slate-200 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-slate-900 mb-2">Inbox is Empty</h3>
-          <p className="text-slate-500 max-sm mx-auto">Customer support messages will be listed here in real-time.</p>
+          <p className="text-slate-500 max-w-sm mx-auto">Customer support messages will be listed here in real-time.</p>
         </div>
       ) : (
         <div className="grid gap-6">
@@ -392,7 +392,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="col-span-2 md:col-span-1">
                       <label className="text-xs font-black uppercase text-slate-400 mb-2 block">Category</label>
                       <select value={newSite.category} onChange={e => setNewSite({...newSite, category: e.target.value as any})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer">
-                        {['SaaS', 'E-commerce', 'Tool', 'Content', 'Marketplace'].map(c => <option key={c} value={c}>{c}</option>)}
+                        {['SaaS', 'E-commerce', 'Tool', 'Content', 'Marketplace', 'Finance'].map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                     <div className="col-span-2">

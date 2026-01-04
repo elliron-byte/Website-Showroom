@@ -8,61 +8,63 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { ContactUs } from './components/ContactUs';
 import { MOCK_LISTINGS } from './constants';
 import { WebsiteListing, ContactSubmission } from './types';
-import { ArrowRight, Brain, Settings, Globe, MessageCircle, CheckCircle2, Clock, Wallet, Send } from 'lucide-react';
+import { supabase } from './supabaseClient';
+import { ArrowRight, Brain, Settings, Globe, MessageCircle, CheckCircle2, Clock, Wallet, Send, Loader2 } from 'lucide-react';
 
 type ViewType = 'dashboard' | 'showroom' | 'enquiries' | 'contact' | 'admin';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const [listings, setListings] = useState<WebsiteListing[]>(() => {
-    try {
-      const saved = localStorage.getItem('showroom_listings');
-      return saved ? JSON.parse(saved) : MOCK_LISTINGS;
-    } catch (e) {
-      console.error("Failed to load listings from storage:", e);
-      return MOCK_LISTINGS;
-    }
-  });
-
-  const [submissions, setSubmissions] = useState<ContactSubmission[]>(() => {
-    try {
-      const saved = localStorage.getItem('showroom_submissions');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error("Failed to load submissions from storage:", e);
-      return [];
-    }
-  });
+  const [listings, setListings] = useState<WebsiteListing[]>([]);
+  const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
   
   const [selectedListing, setSelectedListing] = useState<WebsiteListing | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'price_high' | 'price_low' | 'newest'>('newest');
 
+  // Fetch data from Supabase on mount
   useEffect(() => {
-    try {
-      localStorage.setItem('showroom_listings', JSON.stringify(listings));
-    } catch (e) {
-      console.error("Failed to save listings to storage:", e);
-      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-        alert("The image you uploaded is too large for browser storage. Please try a smaller image.");
-      }
-    }
-  }, [listings]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('showroom_submissions', JSON.stringify(submissions));
-    } catch (e) {
-      console.error("Failed to save submissions to storage:", e);
-    }
-  }, [submissions]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('path') === 'admin') setActiveView('admin');
+    fetchInitialData();
   }, []);
+
+  const fetchInitialData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch listings
+      const { data: listingsData, error: listingsError } = await supabase
+        .from('listings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (listingsError) throw listingsError;
+      
+      // Use mock data if DB is empty
+      if (!listingsData || listingsData.length === 0) {
+        setListings(MOCK_LISTINGS);
+      } else {
+        setListings(listingsData);
+      }
+
+      // Fetch submissions (only needed for admin, but we load here for simplicity)
+      const { data: submissionsData, error: submissionsError } = await supabase
+        .from('submissions')
+        .select('*')
+        .order('timestamp', { ascending: false });
+
+      if (submissionsError) throw submissionsError;
+      setSubmissions(submissionsData || []);
+
+    } catch (error) {
+      console.error("Error fetching from Supabase:", error);
+      // Fallback to mock data on error
+      setListings(MOCK_LISTINGS);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredListings = useMemo(() => {
     if (!Array.isArray(listings)) return [];
@@ -73,33 +75,68 @@ const App: React.FC = () => {
     return result;
   }, [listings, categoryFilter, sortBy]);
 
-  const handleDeleteListing = (id: string) => {
+  const handleDeleteListing = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this listing?')) {
-      setListings(prev => prev.filter(l => l.id !== id));
+      const { error } = await supabase.from('listings').delete().eq('id', id);
+      if (!error) {
+        setListings(prev => prev.filter(l => l.id !== id));
+      } else {
+        alert("Failed to delete from database: " + error.message);
+      }
     }
   };
 
-  const handleContactSubmit = (data: Omit<ContactSubmission, 'id' | 'timestamp'>) => {
-    const newSubmission: ContactSubmission = {
+  const handleContactSubmit = async (data: Omit<ContactSubmission, 'id' | 'timestamp'>) => {
+    const newSubmission = {
       ...data,
-      id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString()
     };
-    setSubmissions(prev => [newSubmission, ...prev]);
-  };
+    
+    const { data: inserted, error } = await supabase
+      .from('submissions')
+      .insert([newSubmission])
+      .select();
 
-  const handleDeleteSubmission = (id: string) => {
-    if (window.confirm('Delete this message?')) {
-      setSubmissions(prev => prev.filter(s => s.id !== id));
+    if (!error && inserted) {
+      setSubmissions(prev => [inserted[0], ...prev]);
+    } else {
+      console.error("Supabase insert error:", error);
     }
   };
 
-  const handleAddListing = (listing: WebsiteListing) => {
-    setListings(prev => [listing, ...prev]);
+  const handleDeleteSubmission = async (id: string) => {
+    if (window.confirm('Delete this message?')) {
+      const { error } = await supabase.from('submissions').delete().eq('id', id);
+      if (!error) {
+        setSubmissions(prev => prev.filter(s => s.id !== id));
+      }
+    }
   };
 
-  const handleUpdateListing = (updatedListing: WebsiteListing) => {
-    setListings(prev => prev.map(l => l.id === updatedListing.id ? updatedListing : l));
+  const handleAddListing = async (listing: WebsiteListing) => {
+    const { data: inserted, error } = await supabase
+      .from('listings')
+      .insert([listing])
+      .select();
+
+    if (!error && inserted) {
+      setListings(prev => [inserted[0], ...prev]);
+    } else {
+      alert("Error adding listing to cloud: " + error?.message);
+    }
+  };
+
+  const handleUpdateListing = async (updatedListing: WebsiteListing) => {
+    const { error } = await supabase
+      .from('listings')
+      .update(updatedListing)
+      .eq('id', updatedListing.id);
+
+    if (!error) {
+      setListings(prev => prev.map(l => l.id === updatedListing.id ? updatedListing : l));
+    } else {
+      alert("Error updating listing in cloud: " + error.message);
+    }
   };
 
   const handleContactSellerAction = () => {
@@ -142,7 +179,7 @@ const App: React.FC = () => {
         <section className="mb-12">
           <div className="bg-pattern p-4 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-200 shadow-sm">
             <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
-              {['All', 'SaaS', 'E-commerce', 'Tool', 'Content', 'Marketplace'].map(cat => (
+              {['All', 'SaaS', 'E-commerce', 'Tool', 'Content', 'Marketplace', 'Finance'].map(cat => (
                 <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${categoryFilter === cat ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>{cat}</button>
               ))}
             </div>
@@ -153,9 +190,17 @@ const App: React.FC = () => {
             </select>
           </div>
         </section>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredListings.map(listing => <ListingCard key={listing.id} listing={listing} onClick={setSelectedListing} />)}
-        </div>
+
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Syncing with cloud...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredListings.map(listing => <ListingCard key={listing.id} listing={listing} onClick={setSelectedListing} />)}
+          </div>
+        )}
       </div>
     </div>
   );

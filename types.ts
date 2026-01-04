@@ -10,7 +10,7 @@ export interface WebsiteListing {
   name: string;
   url: string;
   description: string;
-  category: 'SaaS' | 'Content' | 'E-commerce' | 'Tool' | 'Marketplace';
+  category: 'SaaS' | 'Content' | 'E-commerce' | 'Tool' | 'Marketplace' | 'Finance';
   price: number;
   monthlyRevenue: number;
   monthlyProfit: number;
