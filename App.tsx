@@ -293,7 +293,9 @@ const App: React.FC = () => {
         <p className="text-indigo-100 text-lg mb-8 max-w-xl mx-auto">Contact me today to discuss your project and get started on your digital journey.</p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a 
-            href="https://t.me/yourusername" 
+            href="https://t.me/anonymousxprogrammer" 
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-sky-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-sky-500/20"
           >
             <Send className="w-6 h-6" /> Chat on Telegram
@@ -337,7 +339,7 @@ const App: React.FC = () => {
       <footer className="py-12 border-t border-slate-200 text-center">
         <div className="max-w-7xl mx-auto px-4">
           <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">
-            Copyright &copy; 2025 Showroom
+            Copyright &copy; 2026 Showroom
           </p>
         </div>
       </footer>

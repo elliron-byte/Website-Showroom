@@ -34,7 +34,9 @@ export const ContactUs: React.FC<ContactUsProps> = ({ onSubmit }) => {
           <div className="mt-12 md:mt-0 flex items-center gap-1.5 text-slate-500 pb-2">
             <span className="text-sm font-medium">Want to reach us manually?</span>
             <a 
-              href="mailto:support@investmentshowroom.com" 
+              href="https://t.me/anonymousxprogrammer" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm font-bold text-indigo-600 hover:text-indigo-800 underline transition-colors cursor-pointer"
             >
               click here
